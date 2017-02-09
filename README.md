@@ -2,6 +2,7 @@
 java 开发工具类
 ### 2017-02-09
  1. StringUtils.isEmpty & StringUtils.isBlank 的区别  
+ 2. StringUtils.indexOf的用法
  
 ### 2017-01-10  
   1. BlockingQueue  
