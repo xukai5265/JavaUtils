@@ -1,5 +1,7 @@
 package cn.xukai.java.learn;
 
+import java.util.HashMap;
+
 /**
  * Created by xukai on 2017/2/17.
  *
@@ -30,6 +32,8 @@ public class BitOperation {
 
         //hashmap 最大容量
         System.out.println((1 << 30));
+
+        new HashMap<>();
 
     }
     public static void printInfo(int num){
