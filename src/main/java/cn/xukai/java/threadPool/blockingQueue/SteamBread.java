@@ -1,4 +1,4 @@
-package cn.xukai.java.threadPool;
+package cn.xukai.java.threadPool.blockingQueue;
 
 /**
  * Created by xukai on 2017/1/6.
