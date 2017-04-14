@@ -1,4 +1,4 @@
-package cn.xukai.java.thread.volatiles;
+package cn.xukai.java.thread.volatiles.demo1;
 
 /**
  * Created by xukai on 2017/4/14.
