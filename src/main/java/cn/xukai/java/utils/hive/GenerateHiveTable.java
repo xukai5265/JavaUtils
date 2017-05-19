@@ -19,17 +19,18 @@ public class GenerateHiveTable {
         String gl = "/ods/srdb/gl/";
         String jk = "/ods/srdb/jk/";
         String kyj = "/ods/srdb/kyj/";
+        //外部表模板
         String model = ")ROW FORMAT DELIMITED FIELDS TERMINATED BY '\\001' LOCATION ";
-
 
         //输入流
         FileInputStream in = null;
         InputStreamReader inReader = null;
         BufferedReader bufReader = null;
+
         //输出流
         OutputStream out = null;
 
-        // 数据表Map
+        // 临时数据表Map
         Map<Integer,String> tableMap = new HashMap<>();
 
         try {
@@ -45,17 +46,21 @@ public class GenerateHiveTable {
             // 目标文件创建输出流
             out = new FileOutputStream(fileCopy, true);
 
+            // 源文件读取一行内容
             String line="";
-            int length = 0;
-            // 源文件读取一部分内容
+
+            //map key 标记位
             int i =0;
             while ((line=bufReader.readLine())!=null) {
+                //过滤index
                 if(line.contains("drop index")){
                     continue;
                 }
+                //过滤 符号
                 if(line.startsWith("/*")){
                     continue;
                 }
+                //删除语句格式化
                 if(line.contains("drop table if exists")){
                     String [] tmp = line.split(" ");
                     String table = tmp[4].toLowerCase();
@@ -64,10 +69,12 @@ public class GenerateHiveTable {
                     }
                     line = tmp[0]+" "+tmp[1]+" "+tmp[2]+" "+tmp[3]+" "+table;
                 }
+
                 line = generateTable(line);
                 i++;
-
+                //将数据放入到map中
                 tableMap.put(i,line);
+                //处理hive 外部表最后一行的信息。包括指定表在hdfs上的路径。
                 if(line.startsWith(")")){
                     int lastColumnSize = tableMap.size()-1;
                     String lastColumn = tableMap.get(lastColumnSize).replace(",","");
@@ -78,7 +85,6 @@ public class GenerateHiveTable {
                     for(Map.Entry<Integer,String> entry : tableMap.entrySet()){
                         //判断表名对应的hdfs目录位置
                         String value = entry.getValue();
-
                         if(value.contains("CREATE EXTERNAL TABLE IF NOT EXISTS")){
                             String [] tmp = value.split(" ");
                             String table = tmp[6];
@@ -108,12 +114,11 @@ public class GenerateHiveTable {
                         out.write(entry.getValue().getBytes());
                         out.write("\r\n".getBytes());
                     }
+                    //key 还原
                     i=0;
+                    //kap 清空
                     tableMap.clear();
                 }
-
-
-
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -160,12 +165,14 @@ public class GenerateHiveTable {
             //numeric(15,5),
             line = words[1]+" "+words[2].replace("numeric","decimal");
         }
-
-
-
         return line;
     }
 
+    /**
+     * 数组去重
+     * @param array
+     * @return
+     */
     public static String[] qc (String [] array){
         List<String> list = new ArrayList<>();
         list.add(array[0]);
