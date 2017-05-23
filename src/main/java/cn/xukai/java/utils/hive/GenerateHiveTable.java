@@ -5,6 +5,18 @@ import java.util.*;
 
 /**
  * Created by kaixu on 2017/5/19.
+ *
+ * 有问题的表：
+ *  1. t_rdm_081   中文字段
+ *  2. SLOW_QUERY 字段中带有问号。
+ *  3. T_JK_CREDIT_BASIC_INFO-------------------------------------企业征信_
+ *  4. t_jk_contract_bak0829  中文字段
+ *  5. t_repayment_sms_date
+ *  6. T_JK_CREDIT_BASIC_INFO 原表中是这样的   "T_JK_CREDIT_BASIC_INFO"
+ *  7. t_jk_loan_appointment_template   -> 字段类型 APPOINTMENT_DAY time without time zone,
+ *  8. t_repayment_sms_date  生成格式有问题。
+
+
  */
 public class GenerateHiveTable {
     public static void main(String[] args) throws IOException {
@@ -19,6 +31,7 @@ public class GenerateHiveTable {
         String gl = "/ods/srdb/gl/";
         String jk = "/ods/srdb/jk/";
         String kyj = "/ods/srdb/kyj/";
+
         //外部表模板
         String model = ")ROW FORMAT DELIMITED FIELDS TERMINATED BY '\\001' LOCATION ";
 
@@ -60,6 +73,11 @@ public class GenerateHiveTable {
                 if(line.startsWith("/*")){
                     continue;
                 }
+                if(line.contains("T_JK_CREDIT_BASIC_INFO")){
+                    System.out.println("aaaa");
+                }
+
+
                 //删除语句格式化
                 if(line.contains("drop table if exists")){
                     String [] tmp = line.split(" ");
@@ -77,9 +95,11 @@ public class GenerateHiveTable {
                 //处理hive 外部表最后一行的信息。包括指定表在hdfs上的路径。
                 if(line.startsWith(")")){
                     int lastColumnSize = tableMap.size()-1;
-                    String lastColumn = tableMap.get(lastColumnSize).replace(",","");
+                    String lastColumn = tableMap.get(lastColumnSize);
+                    int index = lastColumn.lastIndexOf(",");
+                    if(index!=-1)
+                        lastColumn = lastColumn.substring(0, index);
                     tableMap.put(lastColumnSize,lastColumn);
-
                     int lastSize = tableMap.size();
                     //判断表名对应的hdfs目录位置
                     for(Map.Entry<Integer,String> entry : tableMap.entrySet()){
@@ -89,11 +109,11 @@ public class GenerateHiveTable {
                             String [] tmp = value.split(" ");
                             String table = tmp[6];
                             if(table.startsWith("t_cj")){
-                                String res = model+"'"+cj+table+"';";
+                                String res = model+"'"+jk+table+"';";
                                 tableMap.put(lastSize,res);
                                 break;
                             }else if(table.startsWith("t_gl")){
-                                String res = model+"'"+gl+table+"';";
+                                String res = model+"'"+jk+table+"';";
                                 tableMap.put(lastSize,res);
                                 break;
                             }else if(table.startsWith("t_jk")){
@@ -101,18 +121,20 @@ public class GenerateHiveTable {
                                 tableMap.put(lastSize,res);
                                 break;
                             }else if(table.startsWith("t_kyj")){
-                                String res = model+"'"+kyj+table+"';";
+                                String res = model+"'"+jk+table+"';";
                                 tableMap.put(lastSize,res);
                                 break;
                             }
                         }
                     }
-
-                    //将map 写入文件，且将最后一个字段的逗号去掉。
-                    for(Map.Entry<Integer,String> entry : tableMap.entrySet()){
-                        // 目标文件中添加一行数据
-                        out.write(entry.getValue().getBytes());
-                        out.write("\r\n".getBytes());
+                    //过滤掉create index 语句
+                    if(!(tableMap.get(2).contains("create index")||(tableMap.get(2).contains("create unique index")))){
+                        //将 一个建表语句统一写入文件
+                        for(Map.Entry<Integer,String> entry : tableMap.entrySet()){
+                            // 目标文件中添加一行数据
+                            out.write(entry.getValue().getBytes());
+                            out.write("\r\n".getBytes());
+                        }
                     }
                     //key 还原
                     i=0;
@@ -141,30 +163,57 @@ public class GenerateHiveTable {
                 table= "t_"+table;
             }
             line = model1 + table;
-        }
-        //character varying , timestamp, date  => string
-        if(line.contains("character varying")|| line.contains("timestamp")||line.contains("date")){
+        }else if(line.contains("character varying")|| line.contains("timestamp")||line.contains("date")||line.contains("bytea")
+                ||line.contains("character")||line.contains("varchar2")||line.contains("text")){
             //step 1 character varying 替换成 string
             String [] words = line.split(" ");
             words = qc(words);
             line = words[1] +" string,";
-        }
-
-        //integer => int
-        if(line.contains("integer")){
+        }else if(line.contains("integer")){
             //step 1 character varying 替换成 string
             String [] words = line.split(" ");
             words = qc(words);
             line = words[1] +" int,";
-        }
-        //numeric
-        if(line.contains("numeric")){
+        }else if(line.contains("bigint")){
+            //step 1 character varying 替换成 string
+            String [] words = line.split(" ");
+            words = qc(words);
+            line = words[1] +" bigint,";
+        }else if(line.contains("double precision")){
+            //step 1 character varying 替换成 string
+            String [] words = line.split(" ");
+            words = qc(words);
+            line = words[1] +" double,";
+        }else if(line.contains("boolean")){
+            //step 1 character varying 替换成 string
+            String [] words = line.split(" ");
+            words = qc(words);
+            line = words[1] +" boolean,";
+        }else if(line.contains("smallint")){
+            //step 1 character varying 替换成 string
+            String [] words = line.split(" ");
+            words = qc(words);
+            line = words[1] +" int,";
+        }else if(line.contains("numeric")){
             //step 1 character varying 替换成 string
             String [] words = line.split(" ");
             words = qc(words);
             //numeric(15,5),
             line = words[1]+" "+words[2].replace("numeric","decimal");
+            if(!line.endsWith(",")){
+                line= line+",";
+            }
+        }else if(line.contains("number")){
+            //step 1 character varying 替换成 string
+            String [] words = line.split(" ");
+            words = qc(words);
+            //numeric(15,5),
+            line = words[1]+" "+words[2].replace("number","decimal");
+            if(!line.endsWith(",")){
+                line= line+",";
+            }
         }
+
         return line;
     }
 
