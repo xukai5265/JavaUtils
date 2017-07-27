@@ -89,7 +89,9 @@ public class ReduceJoinTest {
             //2.3   指定输出的路径和设置输出的格式化类
             FileOutputFormat.setOutputPath(job, new Path(OUT_PATH));
             job.setOutputFormatClass(TextOutputFormat.class);
-
+            /**
+             * 不设置此参数，运行时找不到mapper 和 reduce 类
+             */
             job.setJarByClass(ReduceJoinTest.class);
             // 提交作业 退出
             System.exit(job.waitForCompletion(true) ? 0 : 1);
@@ -106,7 +108,7 @@ public class ReduceJoinTest {
     public static class ReduceJoinMapper extends Mapper<LongWritable,Text,Text,Text> {
         @Override
         protected void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
-            // TODO: 2017/7/27  FileSplit是什么？
+            // FileSplit是什么？ 可以获取输入文件的一些信息，如 文件路径，目录深度，获取当前类，文件长度，等等
             //获取输入文件的全路径和名称
             FileSplit fileSplit = (FileSplit) context.getInputSplit();
             String path = fileSplit.getPath().toString();
