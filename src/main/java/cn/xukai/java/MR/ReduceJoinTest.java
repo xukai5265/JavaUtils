@@ -24,6 +24,15 @@ import java.util.List;
 
 /**
  * Created by kaixu on 2017/7/27.
+ * reduce join
+ * 思想：
+ * 对文件A 和 文件B 在map 端进行标记。
+ * 在shuffle阶段已经自然按key分组
+ * reduce阶段，判断每一个value是来自data1还是data2,在内部分成2组，做集合的乘积。
+ *
+ * 这种方法有2个问题：
+ *  1, map阶段没有对数据瘦身，shuffle的网络传输和排序性能很低。
+    2, reduce端对2个集合做乘积计算，很耗内存，容易导致OOM。
  * tb_a
  *   id  name
      1   北京
