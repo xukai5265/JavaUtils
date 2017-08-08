@@ -67,6 +67,13 @@ import java.util.ArrayList;
  */
 public class GenericUDFJSONArray extends GenericUDF {
     private transient ObjectInspectorConverters.Converter converter;
+    /*
+       来处理该UDF的输入参数的类型信息
+
+       Hive 中operator处理的数据都是Object加上一个ObjectInspector对象，我们可以非常方便的通过该
+       ObjectInspector对象了解到上游传过来的值是什么，如果是Struct对象，可以进一步了解到有多少了
+       Filed，进而获取每个Filed的值，而且通过Serde可以方便的完成数据的序列化操作。
+     */
     @Override
     public ObjectInspector initialize(ObjectInspector[] objectInspectors) throws UDFArgumentException {
         if (objectInspectors.length!=1)

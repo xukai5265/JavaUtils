@@ -5,6 +5,7 @@ package cn.xukai.java.utils;
  */
 public class Demo1 {
     public static void main(String[] args) {
+        System.out.println("abc" == "abc");
         for (boolean isLink = true; isLink;) {
             System.out.println(isLink);
             isLink = false;
