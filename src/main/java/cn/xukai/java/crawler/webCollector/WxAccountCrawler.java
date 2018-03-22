@@ -1,4 +1,4 @@
-package cn.xukai.java.webCollector;
+package cn.xukai.java.crawler.webCollector;
 import cn.edu.hfut.dmic.webcollector.model.CrawlDatum;
 import cn.edu.hfut.dmic.webcollector.model.CrawlDatums;
 import cn.edu.hfut.dmic.webcollector.model.Page;

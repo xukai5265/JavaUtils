@@ -6,6 +6,8 @@ import org.apache.commons.io.LineIterator;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
 
 /**
  * commons-io 示例
@@ -39,6 +41,10 @@ public class UtilityExample {
         // 判断一个文件是否在某个目录中.
         File parent = FileUtils.getFile(PARENT_DIR);
         System.out.println("Parent directory contains exampleTxt file: " + FileUtils.directoryContains(parent, exampleFile));
+
+        URL url = new URL("http://www.dimurmill.com");
+        InputStream ins = url.openStream();
+        FileUtils.copyInputStreamToFile(ins,new File("a"));
     }
 
     public static void main(String[] args) throws IOException {
