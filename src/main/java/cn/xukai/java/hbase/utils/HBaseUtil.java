@@ -433,6 +433,7 @@ public class HBaseUtil {
         final BufferedMutator mutator = conn.getBufferedMutator(params);
         try {
             mutator.mutate(puts);
+            // 如果不flush ，在后面get可能是看不见的。
             mutator.flush();
         } finally {
             mutator.close();

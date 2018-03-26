@@ -30,7 +30,8 @@ public class HBaseServiceImpl extends AbstractHBaseService{
      * 多线程同步提交
      * @param tableName  表名称
      * @param puts  待提交参数
-     * @param waiting  是否等待线程执行完成  true 可以及时看到结果, false 让线程继续执行，并跳出此方法返回调用方主程序
+     * @param waiting  是否等待线程执行完成  true 可以及时看到结果,
+     *                                       false 让线程继续执行，并跳出此方法返回调用方主程序
      */
     @Override
     public void batchPut(final String tableName, final List<Put> puts, boolean waiting) {

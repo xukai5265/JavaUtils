@@ -10,9 +10,11 @@ import static org.apache.zookeeper.Watcher.Event.*;
 
 /**
  * Created by kaixu on 2017/12/18.
+ * zk 作为配置中心使用
  */
 public class ConfigWatcher implements Watcher{
-
+    private static final String HOST1="localhost:2181";
+    private static final String HOST2="hadoop-7:2181,,hadoop-6:2181,,hadoop-5:2181";
     private ActiveKeyValueStore store;
 
     public ConfigWatcher(String hosts) throws IOException, InterruptedException {
@@ -40,7 +42,7 @@ public class ConfigWatcher implements Watcher{
     }
 
     public static void main(String[] args) throws IOException, InterruptedException, KeeperException {
-        ConfigWatcher configWatcher = new ConfigWatcher("localhost:2181");
+        ConfigWatcher configWatcher = new ConfigWatcher(HOST2);
         configWatcher.displayConfig();
         Thread.sleep(Long.MAX_VALUE);
     }

@@ -33,7 +33,7 @@ public class HBaseTest {
     @Test
     public void getRows() throws Exception {
         HBaseUtil.init();
-        Result result = HBaseUtil.getRow("t1", "1".getBytes());
+        Result result = HBase.getRow("t1", "1".getBytes());
         HBaseUtil.formatRow(result.raw());
     }
 

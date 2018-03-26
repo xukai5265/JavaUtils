@@ -76,7 +76,7 @@ public enum RandCodeEnum {
     }
 
     public static void main(String[] args) {
-        String[] hbaseKeys = RandCodeEnum.HBASE_CHAR.getHbaseKeys(240,2,false);
+        String[] hbaseKeys = RandCodeEnum.HBASE_CHAR.getHbaseKeys(240,2,true);
         for (String s : hbaseKeys) {
             System.out.println(s);
         }
