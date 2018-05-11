@@ -25,8 +25,6 @@ public class ConsumerDemo implements Runnable {
         //偏移量写入kafka __consumers_offsets 中
         props.put("bootstrap.servers", "192.168.107.128:9092");
         props.put("group.id", groupId);
-//        props.put("enable.auto.commit", "true");
-//        props.put("auto.commit.interval.ms", "1000");
         props.put("enable.auto.commit", "false");
         props.put("exclude.internal.topics","false");
         props.put("session.timeout.ms", "30000");

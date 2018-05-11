@@ -138,6 +138,20 @@ public class RestUtils {
             e.printStackTrace();
             result = e.getMessage().toString();
         }
+        JSONObject jsonObject = JSON.parseObject(result);
+        JSONArray row = jsonObject.getJSONArray("Row");
+        System.out.println(row);
+        for(int i=0;i<row.size();i++){
+            JSONObject jsonObject1 = row.getJSONObject(i);
+            System.out.println("key: "+new String(decode(jsonObject1.getString("key"))));
+            JSONArray cell = jsonObject1.getJSONArray("Cell");
+            for(int j=0;j<cell.size();j++){
+                JSONObject jo = cell.getJSONObject(j);
+                System.out.println("column:"+new String(decode(jo.getString("column"))));
+                System.out.println("value:"+new String(decode(jo.getString("$"))));
+                System.out.println("timestamp:"+jo.getString("timestamp"));
+            }
+        }
         return result;
     }
     /**
@@ -194,22 +208,10 @@ public class RestUtils {
 
 
     public static void main(String[] args) {
-        String res = RestUtils.getRowKey("t2","r2","cf:a","application/json");
+        String res = RestUtils.getRowKey("t2","r2","","application/json");
         System.out.println(res);
-        JSONObject jsonObject = JSON.parseObject(res);
-        JSONArray row = jsonObject.getJSONArray("Row");
-        System.out.println(row);
-        for(int i=0;i<row.size();i++){
-            JSONObject jsonObject1 = row.getJSONObject(i);
-            System.out.println("key: "+new String(decode(jsonObject1.getString("key"))));
-            JSONArray cell = jsonObject1.getJSONArray("Cell");
-            for(int j=0;j<cell.size();j++){
-                JSONObject jo = cell.getJSONObject(j);
-                System.out.println("column:"+new String(decode(jo.getString("column"))));
-                System.out.println("value:"+new String(decode(jo.getString("$"))));
-                System.out.println("timestamp:"+jo.getString("timestamp"));
-            }
-        }
+        RestUtils.writeRowInTableByJson("t2","");
+
     }
 
 }
