@@ -1,11 +1,13 @@
-package cn.xukai.java.hbase.utils;
+package cn.xukai.java.hbase.callabledemo;
 
+import cn.xukai.java.hbase.utils.HBasePageModel;
+import cn.xukai.java.hbase.utils.RandCodeEnum;
+import cn.xukai.java.hbase.utils.SocPut;
 import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.*;
 import org.apache.hadoop.hbase.client.*;
-import org.apache.hadoop.hbase.filter.FilterList;
-import org.apache.hadoop.hbase.filter.PageFilter;
+import org.apache.hadoop.hbase.filter.*;
 import org.apache.hadoop.hbase.io.compress.Compression;
 import org.apache.hadoop.hbase.protobuf.generated.HBaseProtos;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -24,50 +26,18 @@ import java.util.List;
  *
  */
 public class HBaseUtil {
-    private static HBaseUtil hBaseUtil = null;
     private static final Logger logger = LoggerFactory.getLogger(HBaseUtil.class);
 
-    private static Configuration conf;
-    private static Connection conn;
+    private  Configuration conf;
+    private  Connection conn;
 
-    private HBaseUtil() {
+    public HBaseUtil() {
         conf = HBaseConfiguration.create();
-    }
-
-    public static HBaseUtil getInstance() {
-        if (hBaseUtil == null) {
-            synchronized (HBaseUtil.class) {
-                if (hBaseUtil == null) {
-                    hBaseUtil = new HBaseUtil();
-                }
-            }
-        }
-        return hBaseUtil;
-    }
-
-    public static void init(){
         try {
-            if (conf == null) {
-                conf = HBaseConfiguration.create();
-            }
-        } catch (Exception e) {
-            logger.error("HBase Configuration Initialization failure !");
-            throw new RuntimeException(e) ;
-        }
-    }
-    /**
-     * 获得链接
-     * @return
-     */
-    public static synchronized Connection getConnection() {
-        try {
-            if(conn == null || conn.isClosed()){
-                conn = ConnectionFactory.createConnection(conf);
-            }
+            conn = ConnectionFactory.createConnection(conf);
         } catch (IOException e) {
-            logger.error("HBase 建立链接失败 ", e);
+            e.printStackTrace();
         }
-        return conn;
     }
 
     /**
@@ -75,7 +45,7 @@ public class HBaseUtil {
      * @param tableName
      * @throws Exception
      */
-    public static void createTable(String tableName, String[] columnFamilies, boolean preBuildRegion) throws Exception {
+    public void createTable(String tableName, String[] columnFamilies, boolean preBuildRegion) throws Exception {
         if(preBuildRegion){
             String[] s = new String[] { "1", "2", "3", "4", "5", "6", "7", "8", "9", "A", "B", "C", "D", "E", "F" };
             int partition = 16;
@@ -88,7 +58,7 @@ public class HBaseUtil {
             createTable(tableName, columnFamilies);
         }
     }
-    private static void createTable(String tableName, int pNum, boolean only) throws Exception {
+    private void createTable(String tableName, int pNum, boolean only) throws Exception {
         String[] s = RandCodeEnum.HBASE_CHAR.getHbaseKeys(pNum,2,only);
         byte[][] splitKeys = new byte[pNum][];
         for (int i = 1; i <= pNum; i++) {
@@ -102,8 +72,7 @@ public class HBaseUtil {
      * @param cfs
      * @throws IOException
      */
-    private static void createTable(String tableName, String[] cfs, byte[][] splitKeys) throws Exception {
-        Connection conn = getConnection();
+    private void createTable(String tableName, String[] cfs, byte[][] splitKeys) throws Exception {
         HBaseAdmin admin = (HBaseAdmin) conn.getAdmin();
         try {
             if (admin.tableExists(tableName)) {
@@ -131,8 +100,7 @@ public class HBaseUtil {
      * @param cfs
      * @throws IOException
      */
-    private static void createTable(String tableName, String[] cfs) throws Exception {
-        Connection conn = getConnection();
+    private void createTable(String tableName, String[] cfs) throws Exception {
         HBaseAdmin admin = (HBaseAdmin) conn.getAdmin();
         try {
             if (admin.tableExists(tableName)) {
@@ -159,8 +127,7 @@ public class HBaseUtil {
      * @param tablename
      * @throws IOException
      */
-    public static void deleteTable(String tablename) throws IOException {
-        Connection conn = getConnection();
+    public void deleteTable(String tablename) throws IOException {
         HBaseAdmin admin = (HBaseAdmin) conn.getAdmin();
         try {
             if (!admin.tableExists(tablename)) {
@@ -182,9 +149,9 @@ public class HBaseUtil {
      * @return
      * @throws IOException
      */
-    public static Table getTable(String tableName){
+    public Table getTable(String tableName){
         try {
-            return getConnection().getTable(TableName.valueOf(tableName));
+            return conn.getTable(TableName.valueOf(tableName));
         } catch (Exception e) {
             logger.error("Obtain Table failure !", e);
         }
@@ -198,9 +165,9 @@ public class HBaseUtil {
      * @return
      * @throws IOException
      */
-    public static void snapshot(String snapshotName, TableName tableName){
+    public void snapshot(String snapshotName, TableName tableName){
         try {
-            Admin admin = getConnection().getAdmin();
+            Admin admin = conn.getAdmin();
             admin.snapshot(snapshotName, tableName);
         } catch (Exception e) {
             logger.error("Snapshot " + snapshotName + " create failed !", e);
@@ -213,9 +180,9 @@ public class HBaseUtil {
      * @return
      * @throws IOException
      */
-    public static List<HBaseProtos.SnapshotDescription> listSnapshots(String snapshotNameRegex){
+    public List<HBaseProtos.SnapshotDescription> listSnapshots(String snapshotNameRegex){
         try {
-            Admin admin = getConnection().getAdmin();
+            Admin admin = conn.getAdmin();
             if(StringUtils.isNotBlank(snapshotNameRegex))
                 return admin.listSnapshots(snapshotNameRegex);
             else
@@ -232,9 +199,9 @@ public class HBaseUtil {
      * @return
      * @throws IOException
      */
-    public static void deleteSnapshots(String snapshotNameRegex){
+    public void deleteSnapshots(String snapshotNameRegex){
         try {
-            Admin admin = getConnection().getAdmin();
+            Admin admin = conn.getAdmin();
             if(StringUtils.isNotBlank(snapshotNameRegex))
                 admin.deleteSnapshots(snapshotNameRegex);
             else
@@ -250,9 +217,9 @@ public class HBaseUtil {
      * @return
      * @throws IOException
      */
-    public static void deleteSnapshot(String snapshotName){
+    public void deleteSnapshot(String snapshotName){
         try {
-            Admin admin = getConnection().getAdmin();
+            Admin admin = conn.getAdmin();
             if(StringUtils.isNotBlank(snapshotName))
                 admin.deleteSnapshot(snapshotName);
             else
@@ -273,7 +240,7 @@ public class HBaseUtil {
      * @param pageModel 分页模型(*)。
      * @return 返回HBasePageModel分页对象。
      */
-    public static HBasePageModel scanResultByPageFilter(String tableName, byte[] startRowKey, byte[] endRowKey, FilterList filterList, int maxVersions, HBasePageModel pageModel) {
+    public HBasePageModel scanResultByPageFilter(String tableName, byte[] startRowKey, byte[] endRowKey, FilterList filterList, int maxVersions, HBasePageModel pageModel) {
         if(pageModel == null) {
             pageModel = new HBasePageModel(10);
         }
@@ -378,7 +345,7 @@ public class HBaseUtil {
      * @param filterList 过滤器集合，可以为null。
      * @return
      */
-    public static Result selectFirstResultRow(String tableName,FilterList filterList) {
+    public Result selectFirstResultRow(String tableName,FilterList filterList) {
         if(StringUtils.isBlank(tableName)) return null;
         Table table = null;
         try {
@@ -416,9 +383,8 @@ public class HBaseUtil {
      * @return long             返回执行时间
      * @throws IOException
      */
-    public static long put(String tablename, List<Put> puts) throws Exception {
+    public long put(String tablename, List<Put> puts) throws Exception {
         long currentTime = System.currentTimeMillis();
-        Connection conn = getConnection();
         final BufferedMutator.ExceptionListener listener = new BufferedMutator.ExceptionListener() {
             @Override
             public void onException(RetriesExhaustedWithDetailsException e, BufferedMutator mutator) {
@@ -451,7 +417,7 @@ public class HBaseUtil {
      * @return long             返回执行时间
      * @throws IOException
      */
-    public static long put(String tablename, SocPut put) throws Exception {
+    public long put(String tablename, SocPut put) throws Exception {
         return put(tablename, Arrays.asList(put));
     }
 
@@ -462,9 +428,8 @@ public class HBaseUtil {
      * @return long             返回执行时间
      * @throws IOException
      */
-    public static long putByHTable(String tablename, List<?> puts) throws Exception {
+    public long putByHTable(String tablename, List<?> puts) throws Exception {
         long currentTime = System.currentTimeMillis();
-        Connection conn = getConnection();
         HTable htable = (HTable) conn.getTable(TableName.valueOf(tablename));
         htable.setAutoFlushTo(false);
         htable.setWriteBufferSize(5 * 1024 * 1024);
@@ -484,7 +449,7 @@ public class HBaseUtil {
      * @param row
      * @throws IOException
      */
-    public static void delete(String tablename, String row) throws IOException {
+    public void delete(String tablename, String row) throws IOException {
         Table table = getTable(tablename);
         if(table!=null){
             try {
@@ -502,7 +467,7 @@ public class HBaseUtil {
      * @param rows
      * @throws IOException
      */
-    public static void delete(String tablename, String[] rows) throws IOException {
+    public void delete(String tablename, String[] rows) throws IOException {
         Table table = getTable(tablename);
         if (table != null) {
             try {
@@ -527,7 +492,7 @@ public class HBaseUtil {
     public static void closeConnect(Connection conn){
         if(null != conn){
             try {
-//              conn.close();
+              conn.close();
             } catch (Exception e) {
                 logger.error("closeConnect failure !", e);
             }
@@ -541,7 +506,7 @@ public class HBaseUtil {
      * @return
      * @throws IOException
      */
-    public static Result getRow(String tablename, byte[] row) {
+    public Result getRow(String tablename, byte[] row) {
         Table table = getTable(tablename);
 
         Result rs = null;
@@ -569,7 +534,7 @@ public class HBaseUtil {
      * @return
      * @throws Exception
      */
-    public static <T> Result[] getRows(String tablename, List<T> rows) {
+    public  <T> Result[] getRows(String tablename, List<T> rows) {
         Table table = getTable(tablename);
         List<Get> gets = null;
         Result[] results = null;
@@ -605,7 +570,7 @@ public class HBaseUtil {
      * @return
      * @throws IOException
      */
-    public static ResultScanner get(String tablename) {
+    public ResultScanner get(String tablename) {
         Table table = getTable(tablename);
         ResultScanner results = null;
         if (table != null) {
@@ -629,7 +594,7 @@ public class HBaseUtil {
     /**
      * 格式化输出结果
      */
-    public static void formatRow(KeyValue[] rs){
+    public void formatRow(KeyValue[] rs){
         for(KeyValue kv : rs){
             System.out.println(" column family  :  " + Bytes.toString(kv.getFamily()));
             System.out.println(" column   :  " + Bytes.toString(kv.getQualifier()));
@@ -644,13 +609,77 @@ public class HBaseUtil {
      * @param byteNum
      * @return
      */
-    public static long bytes2Long(byte[] byteNum) {
+    private long bytes2Long(byte[] byteNum) {
         long num = 0;
         for (int ix = 0; ix < 8; ++ix) {
             num <<= 8;
             num |= (byteNum[ix] & 0xff);
         }
         return num;
+    }
+
+    private void printResult(Result result){
+        for (KeyValue kv : result.list()) {
+            System.out.println("family:" + Bytes.toString(kv.getFamily()));
+            System.out.println("qualifier:" + Bytes.toString(kv.getQualifier()));
+            System.out.println("value:" + Bytes.toString(kv.getValue()));
+            System.out.println("Timestamp:" + kv.getTimestamp());
+            System.out.println("-------------------------------------------");
+        }
+    }
+
+
+    public static void main(String[] args) throws IOException {
+        HBaseUtil hBaseUtil = new HBaseUtil();
+//        获取单条记录
+//        Result result = hBaseUtil.getRow("t2","f6cbed806f134947bad536649cf09a37".getBytes());
+//        hBaseUtil.printResult(result);
+//        获取前1000条记录
+//        ResultScanner rs = hBaseUtil.get("t2");
+//        Iterator<Result> it= rs.iterator();
+//        while (it.hasNext()){
+//            Result res = it.next();
+//            hBaseUtil.printResult(res);
+//        }
+//        比较过滤器：行键过滤器
+//        Scan scan = new Scan();
+//        Filter filter = new RowFilter(CompareFilter.CompareOp.EQUAL,new BinaryComparator(Bytes.toBytes("f6cbed806f134947bad536649cf09a37")));
+//        scan.setFilter(filter);
+//
+//        Table t2 = hBaseUtil.getTable("t2");
+//        ResultScanner resultScanner = t2.getScanner(scan);
+//        Iterator<Result> its = resultScanner.iterator();
+//        while(its.hasNext()){
+//            System.out.println(its.next());
+//        }
+
+//        列族过滤器
+//        Scan scan = new Scan();
+//        Filter filter = new FamilyFilter(CompareFilter.CompareOp.EQUAL,new BinaryComparator(Bytes.toBytes("cf")));
+//        scan.setFilter(filter);
+//        Table t2 = hBaseUtil.getTable("t2");
+//        ResultScanner resultScanner = t2.getScanner(scan);
+//        Iterator<Result> its = resultScanner.iterator();
+//        while(its.hasNext()){
+//            System.out.println(its.next());
+//        }
+
+//        前缀过滤器
+        Scan scan = new Scan();
+        Filter filter = new PrefixFilter(Bytes.toBytes("f6"));
+        scan.setFilter(filter);
+        Table t2 = hBaseUtil.getTable("t2");
+        ResultScanner sc = t2.getScanner(scan);
+        Iterator<Result> its = sc.iterator();
+        while(its.hasNext()){
+            System.out.println(its.next());
+        }
+
+
+
+
+
+
     }
 }
 

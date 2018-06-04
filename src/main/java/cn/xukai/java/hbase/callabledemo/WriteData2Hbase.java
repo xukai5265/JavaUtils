@@ -1,58 +1,31 @@
-package cn.xukai.java.hbase;
+package cn.xukai.java.hbase.callabledemo;
 
-import cn.xukai.java.hbase.utils.HBaseUtil;
-import cn.xukai.java.hbase.utils.SocPut;
-import cn.xukai.java.hbase.utils.ThreadPoolUtil;
 import com.google.common.collect.Lists;
 import org.apache.hadoop.hbase.client.Put;
-import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.util.Bytes;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 import java.util.UUID;
+import java.util.concurrent.Callable;
 
 /**
- * Created by kaixu on 2018/3/22.
+ * Created by kaixu on 2018/6/1.
  */
-public class Test {
-    private static Logger logger = LoggerFactory.getLogger(Test.class);
-    public static void get(){
-        HBaseUtil.init();
-        Result rs = HBase.getRow("t1","1".getBytes());
-        HBaseUtil.formatRow(rs.raw());
+public class WriteData2Hbase implements Callable<Boolean> {
+    private String tableName;
+    private HBaseUtil hBaseUtil;
+
+    public WriteData2Hbase(String tableName, HBaseUtil hBaseUtil) {
+        this.tableName = tableName;
+        this.hBaseUtil = hBaseUtil;
     }
-    public static void multiThread() throws InterruptedException {
-        logger.info("start...");
-        ThreadPoolUtil threadPool= ThreadPoolUtil.init();
-        HBaseUtil.init();
-        System.out.println(HBaseUtil.getConnection().hashCode());
-        while (true){
-            threadPool.execute(new Runnable() {
-                @Override
-                public void run() {
-                    logger.info(""+HBaseUtil.getConnection().hashCode());
-                    try {
-                        Thread.sleep(21000);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                }
-            });
-            Thread.sleep(11000);
-        }
-    }
-    public static void main(String[] args) throws Exception {
-        HBaseUtil.init();
-//        String [] columnFamilies = {"cf"};
-//        HBaseUtil.createTable("t2",columnFamilies,true);
-//        System.out.println("创建表成功！");
-        long startTime = System.currentTimeMillis();
+
+    @Override
+    public Boolean call() throws Exception {
+        System.out.println("is run...");
         List<Put> list = Lists.newArrayList();
-        for (int i=0;i<500000;i++){
+        for (int i=0;i<1000;i++){
             String id = UUID.randomUUID().toString().replace("-", "");
             String name = UUID.randomUUID().toString();
             String content = "进入hbase shell console\n" +
@@ -196,17 +169,8 @@ public class Test {
             put.addColumn(Bytes.toBytes("cf"), Bytes.toBytes("age"), Bytes.toBytes(new Random().nextInt(80)+""));
             put.addColumn(Bytes.toBytes("cf"), Bytes.toBytes("content"), Bytes.toBytes(content));
             list.add(put);
-            if (list.size()==1000){
-                HBaseUtil.put("t2",list);
-                list = Lists.newArrayList();
-            }
         }
-//
-
-//        System.out.println("插入完毕：共计耗时："+(endTime - startTime)/1000+"秒");
-        Result result = HBaseUtil.getRow("t2","b2dd150f58ea4e558fe0f02436747f3d".getBytes());
-        long endTime = System.currentTimeMillis();
-        System.out.println("共计耗时："+(endTime - startTime)+"毫秒");
-        System.out.println(result.toString());
+        hBaseUtil.put(tableName,list);
+        return true;
     }
 }
